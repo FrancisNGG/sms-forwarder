@@ -1,6 +1,6 @@
 -- LuaTools需要PROJECT和VERSION这两个信息
 PROJECT = "sms_forwarder"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 log.info("main", PROJECT, VERSION)
 
@@ -35,8 +35,8 @@ do
     end
 end
 
--- 本机号码
-myNumber = ""
+-- 本机号码 (一些国外卡获取不到号码，可以在此手动指定)
+myNumber = "+8613800138000"
 
 -- 运营商给的dns经常抽风，手动指定
 socket.setDNS(nil, 1, "114.114.114.114")
@@ -51,6 +51,7 @@ end, 1000)
 log.info("main", "fskv.init", fskv.init())
 
 -- 加载模块
+lib_pdu = require("lib_pdu")
 util_led = require "util_led"
 util_air780e = require "util_air780e"
 util_notify = require "util_notify"
@@ -115,6 +116,9 @@ sys.taskInit(function()
     util_air780e.loopAT("AT", "AT_AT")
     util_air780e.loopAT("ATE1", "AT_ATE1")
 
+    -- 查询 Air780E 模块版本
+    util_air780e.loopAT("AT+CGMR", "AT_AT")
+
     -- 关闭自动升级
     util_air780e.loopAT("AT+UPGRADE=\"AUTO\",0", "AT_UPGRADE")
 
@@ -123,21 +127,11 @@ sys.taskInit(function()
     -- 检查下有没有卡
     local r = util_air780e.loopAT("AT+CPIN?", "AT_CPIN")
     if not r then
-        log.error("util_air780e", "no sim card! exit script!!!!!!!!")
+        log.error("util_air780e", "sim card is not inserted or failured! system will reboot after 2s!")
         util_led.status = 2
         sys.wait(2000)
         rtos.reboot()
         return
-    end
-
-    -- 获取本机号码
-    log.info("util_air780e", "waiting for get the local phone number...")
-    while true do
-        myNumber = util_air780e.loopAT("AT+CNUM", "AT_CNUM", 1000)
-        log.info("util_air780e", "local phone numbe : ", myNumber)
-        if myNumber then
-            break
-        end
     end
 
     -- 配置一下参数
@@ -149,6 +143,24 @@ sys.taskInit(function()
     -- 短信内容直接上报不缓存
     util_air780e.loopAT("AT+CNMI=2,2,0,0,0", "AT_CNMI")
 
+    -- 获取本机号码
+    log.info("util_air780e", "waiting for get the local phone number...")
+    local num = util_air780e.loopAT("AT+CNUM", "AT_CNUM", 200, 5)
+    if num then
+        myNumber = num
+        log.info("main", "gotta have number : ", myNumber)
+    else
+        log.info("main", "the phone number is not exist in sim card, use default number : ", myNumber)
+    end
+
+    -- 当获取的号码不是国内号码时，优先手动注册到中国移动 (主要针对 GiffGaff 在国内注册慢的问题)
+    if string.sub(myNumber, 1, 3) ~= "+86" then
+        log.info("main", "this number is not China mobile number, regedit to ChinaMobile first!")
+        -- 参数 4 代表手自一体，当手动选择不成功时，会自动搜网
+        util_air780e.write("AT+COPS=4,2,\"46000\"")
+        sys.wait(10000)
+    end
+
     -- 检查附着
     log.info("util_air780e", "wait for connection")
     while true do
@@ -158,6 +170,13 @@ sys.taskInit(function()
             break
         end
     end
+
+    -- 查看所注册的运营商
+    util_air780e.write("AT+COPS?")
+
+    -- 初始化完成，发送通知
+    util_notify.add("System",
+        lib_pdu.utf8_ucs2("system is ready now! \nnumber:" .. myNumber .. "\nwaiting for new sms!"))
 
     util_led.status = 4
     log.info("util_air780e", "connected! wait sms")

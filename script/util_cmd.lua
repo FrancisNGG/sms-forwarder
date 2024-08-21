@@ -28,14 +28,14 @@ function cmdHandle(data)
             local _, _, phone, text = data:find("C" .. cmdTag .. "SEND (%d+) +(.+)")
             if phone and text then
                 log.info("cmd", "cmd send sms", phone, text)
-                local d, len = pdu.encodePDU(phone, text)
+                local d, len = lib_pdu.encodePDU(phone, text)
                 if d and len then
-                    air780.write("AT+CMGS=" .. len .. "\r\n")
+                    util_air780e.write("AT+CMGS=" .. len .. "\r\n")
                     local r = sys.waitUntil("AT_SEND_SMS", 5000)
                     if r then
-                        air780.write(d, true)
+                        util_air780e.write(d, true)
                         sys.wait(500)
-                        air780.write(string.char(0x1A), true)
+                        util_air780e.write(string.char(0x1A), true)
                         data = "send sms at command done"
                     else
                         data = "send sms at command error!"

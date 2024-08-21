@@ -1,13 +1,13 @@
 local util_notify = {}
 util_cmd = require "util_cmd"
 
--- 这里默认用的是LuatOS社区提供的推送服务，无使用限制
+-- 推荐使用LuatOS社区提供的推送服务，无使用限制
 -- 官网：https://push.luatos.org/ 点击GitHub图标登陆即可
 -- 支持邮件/企业微信/钉钉/飞书/电报/IOS Bark
 
--- 使用哪个推送服务
+-- 使用哪个推送服务，默认 bark
 -- 可选：luatos/serverChan/pushover/bark
-local useServer = "luatos"
+local useServer = "bark"
 
 -- LuatOS社区提供的推送服务 https://push.luatos.org/ ，用不到可留空
 -- 这里填.send前的字符串就好了
@@ -96,10 +96,8 @@ sys.taskInit(function()
             elseif useServer == "bark" then -- bark
                 local text = data:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F"):gsub("#",
                     "%%23"):gsub("&", "%%26"):gsub(" ", "%%20"):gsub("\n", "%%0A")
-                local numberFrom = "sms from : " .. sms[1]
-                local numberFrom = numberFrom:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F")
+                local numberFrom = sms[1]:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F")
                     :gsub("#", "%%23"):gsub("&", "%%26"):gsub(" ", "%%20"):gsub("\n", "%%0A")
-                -- local copy = --后续增加复制验证码功能
                 local myNumber = myNumber:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F"):gsub(
                     "#", "%%23"):gsub("&", "%%26"):gsub(" ", "%%20"):gsub("\n", "%%0A")
 
