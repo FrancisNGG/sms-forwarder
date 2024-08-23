@@ -58,6 +58,7 @@ function util_notify.add(phone, data)
 end
 
 sys.taskInit(function()
+    sys.waitUntil("IP_READY", 30 * 1000)
     print("gc1", collectgarbage("count"))
     log.info("notify", "notify is ready !!")
     while true do

@@ -1,6 +1,6 @@
 -- LuaTools需要PROJECT和VERSION这两个信息
 PROJECT = "sms_forwarder"
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 log.info("main", PROJECT, VERSION)
 
@@ -52,9 +52,9 @@ log.info("main", "fskv.init", fskv.init())
 
 -- 加载模块
 lib_pdu = require("lib_pdu")
-util_led = require "util_led"
-util_air780e = require "util_air780e"
-util_notify = require "util_notify"
+util_led = require("util_led")
+util_air780e = require("util_air780e")
+util_notify = require("util_notify")
 
 local function clear_table(table)
     for i = 0, #table do
@@ -167,6 +167,7 @@ sys.taskInit(function()
         local r = util_air780e.loopAT("AT+CGATT?", "AT_CGATT", 1000)
         log.info("util_air780e", "connection status", r)
         if r then
+            sys.publish("SIM_READY", r)
             break
         end
     end
@@ -211,6 +212,22 @@ sys.taskInit(function()
             log.info("util_air780e", "receive a sms", phone, time)
             util_notify.add(phone, data) -- 这次的短信
         end
+    end
+end)
+
+-- 定时检查附着
+sys.taskInit(function()
+    sys.waitUntil("SIM_READY", 60000)
+    while true do
+        local r = util_air780e.loopAT("AT+CGATT?", "AT_CGATT", 1000)
+        if r == false then
+            log.info("util_air780e", "connected fail, system reboot after 2s")
+            sys.wait(2000)
+            rtos.reboot()
+        else
+            log.info("util_air780e", "connection status", r, "waiting for new sms!")
+        end
+        sys.wait(10000)
     end
 end)
 
