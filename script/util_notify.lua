@@ -1,5 +1,5 @@
 local util_notify = {}
-util_cmd = require "util_cmd"
+util_cmd = require ("util_cmd")
 
 -- 推荐使用LuatOS社区提供的推送服务，无使用限制
 -- 官网：https://push.luatos.org/ 点击GitHub图标登陆即可
@@ -97,12 +97,14 @@ sys.taskInit(function()
             elseif useServer == "bark" then -- bark
                 local text = data:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F"):gsub("#",
                     "%%23"):gsub("&", "%%26"):gsub(" ", "%%20"):gsub("\n", "%%0A")
-                local numberFrom = sms[1]:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F")
-                    :gsub("#", "%%23"):gsub("&", "%%26"):gsub(" ", "%%20"):gsub("\n", "%%0A")
+                local numberFrom = sms[1]:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F"):gsub(
+                    "#", "%%23"):gsub("&", "%%26"):gsub(" ", "%%20"):gsub("\n", "%%0A")
                 local myNumber = myNumber:gsub("%%", "%%25"):gsub("+", "%%2B"):gsub("/", "%%2F"):gsub("?", "%%3F"):gsub(
                     "#", "%%23"):gsub("&", "%%26"):gsub(" ", "%%20"):gsub("\n", "%%0A")
 
-                local url = barkApi .. barkKey .. "/" .. numberFrom .. "/" .. text .. "?group=" .. myNumber
+                local url =
+                    barkApi .. barkKey .. "/" .. numberFrom .. "%20%3E%20" .. string.sub(myNumber, -4) .. "/" .. text ..
+                        "?group=" .. myNumber
                 log.info("notify", "send to bark push server", url)
 
                 garbagecollect() -- 手动回收内存

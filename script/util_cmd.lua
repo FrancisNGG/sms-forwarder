@@ -1,6 +1,6 @@
 local util_cmd = {}
 
-util_wifi = require "util_wifi"
+util_wifi = require ("util_wifi")
 
 -- 短信接收指令的标记（密码）
 --[[

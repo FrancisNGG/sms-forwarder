@@ -1,6 +1,6 @@
 -- LuaTools需要PROJECT和VERSION这两个信息
 PROJECT = "sms_forwarder"
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 log.info("main", PROJECT, VERSION)
 
@@ -217,7 +217,7 @@ end)
 
 -- 定时检查附着
 sys.taskInit(function()
-    sys.waitUntil("SIM_READY", 60000)
+    sys.waitUntil("SIM_READY", 60 * 1000) -- 60s内等待附着，超时进入循环内执行重启
     while true do
         local r = util_air780e.loopAT("AT+CGATT?", "AT_CGATT", 1000)
         if r == false then
@@ -227,7 +227,7 @@ sys.taskInit(function()
         else
             log.info("util_air780e", "connection status", r, "waiting for new sms!")
         end
-        sys.wait(10000)
+        sys.wait(30 * 1000) -- 每 30s 检查附着
     end
 end)
 
